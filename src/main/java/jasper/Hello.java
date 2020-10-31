@@ -2,8 +2,10 @@ package jasper;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +31,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.itextpdf.text.DocumentException;
+
+import jasper.cert.Pkcs;
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JasperExportManager;
 import net.sf.jasperreports.engine.JasperFillManager;
@@ -45,6 +50,53 @@ public class Hello {
 		return "Hello World";
 	}
 
+	@RequestMapping({ "/cert" })
+	@ResponseBody
+	public String signCert() throws IOException {
+		String filePath = "/Users/chenhui/springwork/jasper/src/main/resources/";
+	String issuerStr = "CN=在线医院,OU=gitbook研发部,O=gitbook有限公司,C=CN,E=gitbook@sina.com,L=北京,ST=北京";
+    String subjectStr = "CN=huangjinjin,OU=gitbook研发部,O=gitbook有限公司,C=CN,E=huangjinjin@sina.com,L=北京,ST=北京";
+    String certificateCRL  = "https://gitbook.cn";
+    Map<String, byte[]> result = Pkcs.createCert("123456", issuerStr, subjectStr, certificateCRL);
+
+    FileOutputStream outPutStream = new FileOutputStream(filePath+"keystore.p12"); // ca.jks
+    outPutStream.write(result.get("keyStoreData"));
+    outPutStream.close();
+    FileOutputStream fos = new FileOutputStream(new File(filePath +"keystore.cer"));
+    fos.write(result.get("certificateData"));
+    fos.flush();
+    fos.close();
+	return "sign cert success";
+	}
+
+	@RequestMapping({ "/addimage" })
+	@ResponseBody
+	public String addImagetoPdf() throws FileNotFoundException, GeneralSecurityException, IOException, DocumentException {
+		
+		String filePath = "/Users/chenhui/springwork/jasper/src/main/resources/";
+	        String KEYSTORE= filePath+"keyStore.p12";//"H://pcs12//houKeyStore";
+	        char[] PASSWORD = "123456".toCharArray();//keystory密码
+	        String SRC=filePath+"testtable.pdf";//H://pcs12//testPage123.pdf" ;//原始pdf
+//	        String SRC=filePath+"a2.pdf";
+	        String DEST=filePath+"addimage.pdf";//H://pcs12//demo_signed_box.pdf" ;//签名完成的pdf
+//	        String DEST2=filePath+"addimage2.pdf";//"H://pcs12//demo_signed_itext.pdf" ;//签名完成的pdf
+	        String chapterPath=filePath+"g.png";//"H://pcs12//d4f894aaef66f07181e55a1b910cf4f5.jpg";//签章图片
+	        String reason="数据不可更改";
+	        String location="桃源乡";
+	 
+	        PdfUtil.sign(new FileInputStream(SRC), new FileOutputStream(DEST),
+	                new FileInputStream(KEYSTORE), PASSWORD,
+	                reason, location, chapterPath);
+	   
+	      
+	        
+	        System.out.println("签章完成 ");
+
+	   
+		return "add image to pdf success";
+	}
+	
+	
 	@RequestMapping(value="/upload", method=RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@ResponseBody
 	public String fileUpload(@RequestParam("file") MultipartFile file) throws IOException {
@@ -60,6 +112,8 @@ public class Hello {
 	fout.close();
 	return "File is upload successfully";
 }
+	
+	
 	@RequestMapping({ "/restUp" })
 	@ResponseBody
 	public String restTemplateUploadFile() {
