@@ -24,6 +24,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -34,6 +35,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.itextpdf.text.DocumentException;
 
 import jasper.cert.Pkcs;
+import jasper.utils.ImageUtil;
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JasperExportManager;
 import net.sf.jasperreports.engine.JasperFillManager;
@@ -49,7 +51,24 @@ public class Hello {
 	public String firstPage() {
 		return "Hello World";
 	}
+	
+	@RequestMapping(value="/imagedencode/{base64Images}")
+	@ResponseBody
+	public String creatImageBase64Code(@PathVariable String base64Image) {
+		String filePath = "/Users/chenhui/springwork/jasper/src/main/resources/";
+		 ImageUtil.decoder(base64Image, filePath+"c.png");
+		 return "convert to image success";
+	}
 
+	@RequestMapping({ "/imagecode" })
+	@ResponseBody
+	public String getImageBase64Code() {
+		String filePath = "/Users/chenhui/springwork/jasper/src/main/resources/";
+		String c =  ImageUtil.encoder(filePath+"g.png");
+		ImageUtil.decoder(c, filePath+"c.jpg");
+		return c;
+	}
+	
 	@RequestMapping({ "/cert" })
 	@ResponseBody
 	public String signCert() throws IOException {
